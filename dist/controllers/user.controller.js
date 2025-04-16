@@ -21,6 +21,7 @@ class UserController {
             const { user, token } = await userService.loginUser(email, password);
             res.status(200).json({
                 status: "Success",
+                message: "User logged in successfully 🎉",
                 token,
                 data: {
                     user,
@@ -31,13 +32,14 @@ class UserController {
             const user = await userService.getUserById(req.user._id);
             res.status(200).json({
                 status: "Success",
+                message: "This user has been fetched successfully 😉",
                 data: {
                     user,
                 },
             });
         });
         this.updateMe = asyncHandler(async (req, res) => {
-            // tri to create an error should the user POST password data
+            // try to create an error should the user POST password data
             if (req.body.password || req.body.passwordConfirm) {
                 throw new AppError("This route is not for password update. Please use /updateMyPassword.", 400);
             }
@@ -51,6 +53,7 @@ class UserController {
             const updateUser = await userService.updateUser(req.user._id, filterBody);
             res.status(200).json({
                 status: "Success",
+                message: "User updated successfully ✅",
                 data: {
                     user: updateUser,
                 },
@@ -60,6 +63,7 @@ class UserController {
             await userService.deleteUser(req.user._id);
             res.status(204).json({
                 status: "Success",
+                message: "Ouch! User deleted 😞",
                 data: null,
             });
         });
