@@ -1,6 +1,10 @@
 import mongoose, { Document } from "mongoose";
 
-export interface IUser extends Document {
+interface IUserMethods {
+  comparePassword: (candidatePassword: string) => Promise<boolean>;
+}
+
+export interface IUser extends Document, IUserMethods {
   id: mongoose.Schema.Types.ObjectId;  //watch here
   name: string;
   email: string;

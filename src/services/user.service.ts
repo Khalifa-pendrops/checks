@@ -21,24 +21,30 @@ class UserServices {
     email: string,
     password: string
   ): Promise<{ user: IUser; token: string }> {
-    //check if email & password already exist
-    if (!email || !password) {
-      throw new AppError("⚠️ Please login credentials", 400);
-    }
+    // ... existing checks ...
 
-    //here checks if user exists & passord matches user
     const user = (await User.findOne({ email }).select(
       "+password"
     )) as IUser & {
       _id: Types.ObjectId;
     };
 
-    if (!user || !password) {
+    if (!user || !(await user.comparePassword(password))) {
       throw new AppError("🚫 Incorrect login credentials", 401);
     }
 
-    //if all credentials pass 👍 grant user access via token
+    // ADD DEBUG LOGS HERE (right before token creation)
+    console.log("Creating token with:", {
+      userId: user._id,
+      secretLength: process.env.JWT_SECRET?.length || "missing",
+      expiresIn: process.env.JWT_EXPIRES_IN || "default",
+    });
+
     const token = createToken(user._id);
+
+    // Log the generated token (for debugging only - remove in production)
+    console.log("Generated token:", token);
+
     return { user, token };
   }
 

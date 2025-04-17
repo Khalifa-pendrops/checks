@@ -126,13 +126,13 @@ class ClaimService {
   //upadate a claim's metadata (does not process the content)
   async updateClaim(
     claimId: string,
-    updateData: IClaimInput //content and claimType are properties of IClaimInput not IClaimInputUpdate
+    updateData: IClaimUpdateInput
   ): Promise<IClaim | null> {
     try {
       //avoid updating fields that will require re-processing
-      const { content, claimType, ...safeUpdates } = updateData;
+      // const { content, claimType, ...safeUpdates } = updateData;
 
-      const updateClaim = await Claim.findByIdAndUpdate(claimId, safeUpdates, {
+      const updateClaim = await Claim.findByIdAndUpdate(claimId, updateData, {
         new: true,
         runValidators: true,
       });

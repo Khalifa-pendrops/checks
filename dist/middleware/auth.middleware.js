@@ -1,31 +1,52 @@
 import jwt from "jsonwebtoken";
 import config from "../config/index.config.js";
 import AppError from "../utils/appError.js";
-export const protect = async (req, res, next) => {
+export const protect = (req, res, next) => {
+    console.log("Incoming Headers:", JSON.stringify(req.headers));
+    console.log("Auth Header:", req.headers.authorization);
+    // 1. Check Authorization header format
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith("Bearer ")) {
+        return res.status(401).json({ message: "Invalid authorization format" });
+    }
+    // 2. Extract token
+    const token = authHeader.split(" ")[1].replace(/"/g, ""); // Remove all quotes from token;
+    if (!token) {
+        return res.status(401).json({ message: "Not authorized" });
+    }
+    // Use config consistently
+    const { jwt_secret } = config;
     try {
-        let token;
-        if (req.headers.authorization &&
-            req.headers.authorization.startsWith("Bearer")) {
-            token = req.headers.authorization.split(" ")[1];
+        console.log("Verifying token with secret length:", jwt_secret.length);
+        const decoded = jwt.verify(token, jwt_secret);
+        // Validate decoded payload
+        if (!decoded.id) {
+            return res.status(401).json({ message: "Invalid token payload" });
         }
-        if (!token) {
-            return next(new AppError("You are not logged in! Please log in to get access.", 401));
-        }
-        const decoded = jwt.verify(token, config.jwt_secret);
-        // You can add user to request here if needed
-        req.user = { _id: decoded.id };
+        req.user = { _id: decoded.id, role: decoded.role };
         next();
     }
-    catch (err) {
-        next(err);
+    catch (error) {
+        if (error instanceof jwt.TokenExpiredError) {
+            return res.status(401).json({ message: "Token expired" });
+        }
+        if (error instanceof jwt.JsonWebTokenError) {
+            console.error("JWT Error:", error.message);
+            return res.status(401).json({
+                message: "Invalid token",
+                details: error.message,
+            });
+        }
+        console.error("Authentication error:", error);
+        res.status(401).json({ message: "Authentication failed" });
     }
 };
 export const restrictTo = (...roles) => {
     return (req, res, next) => {
-        // Implement role-based access control if needed
-        const userRole = req.user.role || "user"; // Default to "user" if role is undefined
-        //check if role is undefined to avoid assigning a default value
-        if (!userRole || !roles.includes(userRole)) {
+        if (!req.user?.role) {
+            return next(new AppError("User role not found", 403));
+        }
+        if (!roles.includes(req.user.role)) {
             return next(new AppError("You do not have permission to perform this action", 403));
         }
         next();

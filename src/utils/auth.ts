@@ -2,21 +2,25 @@ import jwt, { Secret, SignOptions } from "jsonwebtoken";
 import config from "../config/index.config.js";
 import mongoose, { Types } from "mongoose";
 
-// Ensure the secret is defined
-const jwtSecret = config.jwt_secret;
-if (!jwtSecret) {
-  throw new Error("JWT_SECRET is not defined in the environment");
-}
+const { jwt_secret, expires_in } = config;
+
+type Duration = `${number}${"s" | "m" | "h" | "d" | "w" | "y"}` | number;
 
 export const createToken = (id: Types.ObjectId | string): string => {
   const payload = { id: id.toString() };
+
   const options: SignOptions = {
-    expiresIn: config.expires_in || ("1d" as any),
+    expiresIn: expires_in as Duration,
   };
 
-  return jwt.sign(payload, jwtSecret as Secret, options);
+  return jwt.sign(payload, jwt_secret as Secret, options);
 };
 
 export const verifyToken = (token: string) => {
-  return jwt.verify(token, jwtSecret as Secret);
+  try {
+    return jwt.verify(token, jwt_secret as Secret);
+  } catch (error) {
+    console.error("Token verification failed:", error);
+    throw error;
+  }
 };

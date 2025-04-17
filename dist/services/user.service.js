@@ -14,17 +14,20 @@ class UserServices {
         return newUser;
     }
     async loginUser(email, password) {
-        //check if email & password already exist
-        if (!email || !password) {
-            throw new AppError("⚠️ Please login credentials", 400);
-        }
-        //here checks if user exists & passord matches user
+        // ... existing checks ...
         const user = (await User.findOne({ email }).select("+password"));
-        if (!user || !password) {
+        if (!user || !(await user.comparePassword(password))) {
             throw new AppError("🚫 Incorrect login credentials", 401);
         }
-        //if all credentials pass 👍 grant user access via token
+        // ADD DEBUG LOGS HERE (right before token creation)
+        console.log("Creating token with:", {
+            userId: user._id,
+            secretLength: process.env.JWT_SECRET?.length || "missing",
+            expiresIn: process.env.JWT_EXPIRES_IN || "default",
+        });
         const token = createToken(user._id);
+        // Log the generated token (for debugging only - remove in production)
+        console.log("Generated token:", token);
         return { user, token };
     }
     //   async getUsers(id: string): Promise<IUser | null> {

@@ -24,10 +24,15 @@ export const claimValidationRules = () => {
         body("claimType")
             .isIn(["text", "url", "image", "offline"])
             .withMessage("Invalid claim type"),
-        body("content").notEmpty().withMessage("Content is required"),
+        body("content")
+            .notEmpty()
+            .withMessage("Content is required")
+            .isLength({ max: 10000 })
+            .withMessage("Claim content must be less than 10000 characters"),
         body("language")
             .optional()
             .isString()
+            .isLength({ min: 2, max: 5 })
             .withMessage("Language must be a string"),
     ];
 };

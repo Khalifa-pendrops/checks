@@ -2,7 +2,6 @@ import axios from "axios";
 import { IClaimInput, IClaim } from "../interfaces/claim.interface.js";
 import config from "../config/index.config.js";
 
-// Define verdict type explicitly based on the interface
 type Verdict = NonNullable<IClaim["result"]>["verdict"];
 
 class FactCheckService {
@@ -18,48 +17,121 @@ class FactCheckService {
     claimData: IClaimInput
   ): Promise<NonNullable<IClaim["result"]>> {
     try {
+      console.log("Fact-checking claim:", claimData.content);
+
       const params = {
         key: this.apikey,
         query: claimData.content,
         languageCode: claimData.language || "en",
+        pageSize: 10,
       };
 
       const response = await axios.get(this.apiUrl, { params });
+      console.log("API Response:", {
+        status: response.status,
+        results: response.data?.claims?.length || 0,
+      });
 
-      if (response.data?.claims) {
-        const verdict = this.determineVerdict(response.data.claims);
-
+      if (response.data?.claims?.length > 0) {
         return {
           claimView: response.data.claims,
           accuracy: this.calculateAccuracy(response.data.claims),
-          verdict,
+          verdict: this.determineVerdict(response.data.claims),
         };
+      }
+
+      // Fallback: Try with simplified query
+      const simplifiedQuery = claimData.content
+        .split(" ")
+        .slice(0, 10)
+        .join(" ");
+      if (simplifiedQuery !== claimData.content) {
+        console.log("Trying simplified query:", simplifiedQuery);
+        return this.checkClaim({
+          ...claimData,
+          content: simplifiedQuery,
+        });
       }
 
       return {
         claimView: [],
         accuracy: 0,
-        verdict: "unknown",
+        verdict: "unverified",
       };
-    } catch (err) {
-      console.error("FactCheck API Error: ❌", err);
-      throw new Error("Failed to fact-check claim 😞");
+    } catch (err: any) {
+      console.error("Full API error:", err.response?.data || err.message);
+      throw err;
     }
   }
+
+  // public async testAPI(): Promise<void> {
+  //   console.log("\n=== Starting FactCheck API Test ===");
+  //   console.log("API Key:", this.apikey?.slice(0, 5) + "...");
+
+  //   const testClaim = {
+  //     content: "The moon landing was faked",
+  //     claimType: "text",
+  //     language: "en",
+  //   };
+
+  //   console.log(`\nTesting claim: "${testClaim.content}"`);
+
+  //   try {
+  //     const response = await axios.get(this.apiUrl, {
+  //       params: {
+  //         key: this.apikey,
+  //         query: testClaim.content,
+  //         languageCode: testClaim.language,
+  //       },
+  //     });
+
+  //     console.log("API Response Status:", response.status);
+  //     console.log("Claims Found:", response.data?.claims?.length || 0);
+
+  //     if (response.data?.claims?.length > 0) {
+  //       console.log("✅ API is working correctly");
+  //       console.log("Sample claim:", {
+  //         text: response.data.claims[0].text,
+  //         rating:
+  //           response.data.claims[0].claimReview[0].reviewRating?.ratingValue,
+  //       });
+  //     } else {
+  //       console.warn("⚠️ No claims found. Possible reasons:");
+  //       console.warn("- API key not authorized");
+  //       console.warn("- No matching fact-checks exist");
+  //       console.warn("- API endpoint changed");
+  //     }
+  //   } catch (error: any) {
+  //     console.error("❌ API test failed:");
+  //     console.error("Full error:", error.response?.data || error.message);
+  //     throw error;
+  //   }
+  // }
 
   private calculateAccuracy(claims: any[]): number {
     if (!claims || claims.length === 0) return 0;
 
-    const total = claims.reduce((sum, claim) => {
-      const rating = claim.claimReview?.reviewRating?.ratingValue || 0;
-      return sum + (typeof rating === "number" ? rating : 0);
+    const validClaims = claims.filter(
+      (claim) => claim.claimReview?.[0]?.reviewRating?.ratingValue !== undefined
+    );
+
+    if (validClaims.length === 0) return 0;
+
+    const total = validClaims.reduce((sum, claim) => {
+      return sum + claim.claimReview[0].reviewRating.ratingValue;
     }, 0);
 
-    return total / claims.length;
+    return total / validClaims.length;
   }
 
   private determineVerdict(claims: any[]): Verdict {
     if (!claims || claims.length === 0) return "unknown";
+
+    const ratedClaims = claims.filter(
+      (c) => c.claimReview?.[0]?.reviewRating?.alternateName
+    );
+
+    if (ratedClaims.length === 0) return "unknown";
 
     const allowedVerdicts: Verdict[] = [
       "true",
@@ -69,6 +141,7 @@ class FactCheckService {
       "false",
       "pants-fire",
       "unknown",
+      "unverified",
     ];
 
     const verdicts = claims.map((claim) => {
@@ -108,9 +181,10 @@ class FactCheckService {
       "mostly false": "mostly-false",
       false: "false",
       "pants on fire": "pants-fire",
+      unverified: "unverified",
     };
 
-    return verdictMap[rawVerdict] || "unknown";
+    return verdictMap[rawVerdict] || "unverified";
   }
 }
 

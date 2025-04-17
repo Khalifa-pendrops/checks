@@ -47,6 +47,7 @@ const claimSchema = new mongoose.Schema(
           "false",
           "pants-fire",
           "unknown",
+          "unverified",
         ],
       },
     },
