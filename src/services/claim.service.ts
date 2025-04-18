@@ -1,71 +1,52 @@
+// import { IClaimResult } from "./../interfaces/claim.interface";
 import Claim from "../model/claim.model.js";
 import {
   IClaim,
   IClaimInput,
+  IClaimResult,
   IClaimUpdateInput,
+  IFactCheckResult,
+  IFactCheckSource,
 } from "../interfaces/claim.interface.js";
 import factcheckService from "./factcheck.service.js";
 import { FilterQuery, QueryOptions } from "mongoose";
 import AppError from "../utils/appError.js";
 import { Types } from "mongoose";
 
-class ClaimService {
-  //create a new claim and initiate factchecking
-  async createClaim(claimData: IClaimInput, userId: string): Promise<IClaim> {
+class ClaimService {  async createClaim(claimData: IClaimInput, userId: string): Promise<IClaim> {
     try {
-      const claim = new Claim({
+      const claim = await Claim.create({
         user: userId,
         ...claimData,
-        status: "pending",
-        language: claimData.language || "en",
+        status: "processing",
       });
 
-      await claim.save();
+      const result = await factcheckService.checkClaim(claimData);
 
-      //process claim in the background without awaiting
-      this.processClaim((claim._id as Types.ObjectId).toString()).catch(
-        console.error
+      const updatedClaim = await Claim.findByIdAndUpdate(
+        claim._id,
+        {
+          status: "completed",
+          result: {
+            ...result,
+            completedAt: new Date(),
+          },
+        },
+        { new: true }
       );
 
-      return claim;
-    } catch (err) {
-      console.error("Error creating claim: ", err);
-      throw new AppError("Failed to create claim", 500);
-    }
-  }
+      console.log(
+        JSON.stringify(updatedClaim?.result, null, 2)
+      );
 
-  //process claim via the factchecking pipeline
-  private async processClaim(claimId: string): Promise<void> {
-    try {
-      const claim = await Claim.findById(claimId);
+      if (!updatedClaim) {
+        throw new Error("Failed to update claim");
+      }
 
-      //check for claim
-      if (!claim) throw new Error("Claim not found!😞");
-
-      //update status to processing
-      claim.status = "processing";
-      await claim.save();
-
-      //get the result from fact check service
-      const result = await factcheckService.checkClaim({
-        claimType: claim.claimType,
-        content: claim.content,
-        language: claim.language,
-      });
-
-      //update claim with result
-      claim.result = result;
-      (claim.status = "completed"), await claim.save();
-    } catch (err) {
-      console.error(`Claim processing error for ID ${claimId}:`, err);
-
-      await Claim.findByIdAndUpdate(claimId, {
-        status: "failed",
-        $push: {
-          processingErrors:
-            err instanceof Error ? err.message : "Unknown error",
-        },
-      });
+      return updatedClaim;
+    } catch (error) {
+      console.error("❌ Claim processing failed:", error);
+      throw error;
     }
   }
 
@@ -106,7 +87,7 @@ class ClaimService {
         .limit(limit);
 
       if (populateUser) {
-        query = query.populate("user", "name", "email");
+        query = query.populate("user", "name email");
       }
 
       return await query.exec();
@@ -129,9 +110,6 @@ class ClaimService {
     updateData: IClaimUpdateInput
   ): Promise<IClaim | null> {
     try {
-      //avoid updating fields that will require re-processing
-      // const { content, claimType, ...safeUpdates } = updateData;
-
       const updateClaim = await Claim.findByIdAndUpdate(claimId, updateData, {
         new: true,
         runValidators: true,
@@ -165,25 +143,44 @@ class ClaimService {
   //Re-process a claim  (force new factcheck)
   async reprocessClaim(claimId: string): Promise<IClaim | null> {
     try {
-      const claim = await Claim.findByIdAndUpdate(claimId, { new: true });
+      const claim = await Claim.findById(claimId);
 
       if (!claim) {
         throw new AppError("Claim not found", 404);
       }
 
-      this.processClaim((claim._id as Types.ObjectId).toString()).catch(
-        console.error
+      // Perform fact-check
+      const result = await factcheckService.checkClaim({
+        claimType: claim.claimType,
+        content: claim.content,
+        language: claim.language,
+      });
+
+      // Update claim with new results - remove claimView reference
+      const updatedClaim = await Claim.findByIdAndUpdate(
+        claimId,
+        {
+          $set: {
+            status: "completed",
+            result: {
+              ...result,
+            },
+          },
+        },
+        { new: true }
       );
 
-      return claim;
+      return updatedClaim;
     } catch (err) {
-      if (err instanceof AppError) {
-        throw err;
-      }
+      await Claim.findByIdAndUpdate(claimId, {
+        status: "failed",
+        $push: {
+          processingErrors:
+            err instanceof Error ? err.message : "Reprocessing error",
+        },
+      });
+
       throw new AppError("Error re-processing claim", 500);
-      // Or if you want to handle it differently, you could do this if you like:
-      // console.error("Error re-processing claim:", err);
-      // return null;
     }
   }
 }

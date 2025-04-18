@@ -14,7 +14,10 @@ class UserServices {
         return newUser;
     }
     async loginUser(email, password) {
-        // ... existing checks ...
+        // 1) Check if email and password exist
+        if (!email || !password) {
+            throw new AppError("📛 Please provide email and password", 400);
+        }
         const user = (await User.findOne({ email }).select("+password"));
         if (!user || !(await user.comparePassword(password))) {
             throw new AppError("🚫 Incorrect login credentials", 401);
@@ -26,13 +29,8 @@ class UserServices {
             expiresIn: process.env.JWT_EXPIRES_IN || "default",
         });
         const token = createToken(user._id);
-        // Log the generated token (for debugging only - remove in production)
-        console.log("Generated token:", token);
         return { user, token };
     }
-    //   async getUsers(id: string): Promise<IUser | null> {
-    //     return User.find(id);
-    //   }
     async getUserById(id) {
         return User.findById(id);
     }

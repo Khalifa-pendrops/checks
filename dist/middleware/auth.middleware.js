@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import config from "../config/index.config.js";
 import AppError from "../utils/appError.js";
 export const protect = (req, res, next) => {
+    //for debugging purpose only
     console.log("Incoming Headers:", JSON.stringify(req.headers));
     console.log("Auth Header:", req.headers.authorization);
     // 1. Check Authorization header format

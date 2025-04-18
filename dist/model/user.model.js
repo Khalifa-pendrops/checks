@@ -58,9 +58,8 @@ userSchema.pre("save", function (next) {
     this.passwordChangedAt = new Date(Date.now() - 1000);
     next();
 });
-//instance method that should check password
-userSchema.methods.correctPassword = async function (candidatePassword, userPassword) {
-    return await bcrypt.compare(candidatePassword, userPassword);
+userSchema.methods.comparePassword = async function (candidatePassword) {
+    return await bcrypt.compare(candidatePassword, this.password);
 };
 //here creates password reset token
 userSchema.methods.createPasswordResetToken = function () {

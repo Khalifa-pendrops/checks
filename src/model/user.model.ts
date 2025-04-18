@@ -67,12 +67,11 @@ userSchema.pre("save", function (next) {
   next();
 });
 
-//instance method that should check password
-userSchema.methods.correctPassword = async function (
-  candidatePassword: string,
-  userPassword: string
+
+userSchema.methods.comparePassword = async function (
+  candidatePassword: string
 ) {
-  return await bcrypt.compare(candidatePassword, userPassword);
+  return await bcrypt.compare(candidatePassword, this.password);
 };
 
 //here creates password reset token

@@ -3,82 +3,49 @@ import { asyncHandler } from "../utils/apiFeatures.js";
 import AppError from "../utils/appError.js";
 class ClaimController {
     constructor() {
-        //create a claim
-        //access is private
-        this.createClaim = asyncHandler(async (req, res, next) => {
+        this.createClaim = asyncHandler(async (req, res) => {
+            const claimData = {
+                claimType: req.body.claimType,
+                content: req.body.content,
+                language: req.body.language || req.user.languagePreference || "en",
+            };
+            console.log("📨 New claim submission:", claimData.content);
             try {
-                const claimData = {
-                    claimType: req.body.claimType,
-                    content: req.body.content,
-                    language: req.body.language || req.user.languagePreference || "en",
-                };
                 const claim = await claimService.createClaim(claimData, req.user._id);
+                if (!claim.result) {
+                    console.warn("⚠️ No results in claim object");
+                    throw new AppError("Fact-check results not available", 500);
+                }
+                console.log("📊 Claim results:", JSON.stringify(claim.result, null, 2));
                 res.status(201).json({
                     status: "Success 🎉",
-                    message: "Claim created successfully ✅",
+                    message: "Claim verified",
                     data: {
-                        claim,
+                        fullResult: claim.result,
+                        metadata: {
+                            id: claim._id,
+                            type: claim.claimType,
+                            originalContent: claim.content,
+                            status: claim.status,
+                            verdict: claim.result.verdict,
+                            accuracy: claim.result.accuracy,
+                            createdAt: claim.createdAt,
+                        },
+                        analysis: {
+                            explanation: this.getVerdictExplanation(claim.result.verdict),
+                            confidence: claim.result.accuracy > 0.7 ? "High" : "Medium",
+                        },
                     },
                 });
             }
-            catch (err) {
+            catch (error) {
+                console.error("💥 Controller error:", error);
                 res.status(500).json({
-                    status: "Failed",
-                    message: "Failed to create claim",
+                    status: "error",
+                    message: error instanceof Error ? error.message : "Processing failed",
                 });
-                console.error("Failed to create claim:", err.message);
             }
         });
-        // claim.controller.ts
-        // createClaim = asyncHandler(
-        //   async (req: AuthenticatedRequest, res: Response) => {
-        //     const claimData: IClaimInput = {
-        //       claimType: req.body.claimType,
-        //       content: req.body.content,
-        //       language: req.body.language || req.user.languagePreference || "en",
-        //     };
-        //     const claim = await claimService.createClaim(claimData, req.user._id);
-        //     if (!claim?.result) {
-        //       throw new AppError("Fact-check processing failed", 500);
-        //     }
-        //     res.status(201).json({
-        //       status: "Success 🎉",
-        //       message: "Claim created and fact-checked ✅",
-        //       data: {
-        //         claim: {
-        //           ...claim.toObject(),
-        //           result: claim.result, // Ensured to exist
-        //         },
-        //       },
-        //     });
-        //   }
-        // );
-        // In claim.controller.ts
-        // createClaim = asyncHandler(
-        //   async (req: AuthenticatedRequest, res: Response) => {
-        //     const claimData: IClaimInput = {
-        //       ...req.body,
-        //       user: req.user._id,
-        //       status: "pending",
-        //     };
-        //     // 1. First create the claim in database
-        //     const newClaim = await claimService.createClaim(claimData);
-        //     // 2. Then initiate fact-check (await the results)
-        //     const factCheckResults = await factCheckService.checkClaim(claimData);
-        //     // 3. Update claim with results
-        //     const updatedClaim = await claimService.updateClaim(newClaim._id, {
-        //       status: "processed",
-        //       result: factCheckResults,
-        //     });
-        //     res.status(201).json({
-        //       status: "Success 🎉",
-        //       message: "Claim created and processed ✅",
-        //       data: {
-        //         claim: updatedClaim, // Includes fact-check results
-        //       },
-        //     });
-        //   }
-        // );
         //get all claims (with filtering)
         //access is private/admin
         this.getClaims = asyncHandler(async (req, res) => {
@@ -90,7 +57,7 @@ class ClaimController {
                 if (req.query.claimType)
                     filter.claimType = req.query.claimType;
                 if (req.query.language)
-                    filter.langauge = req.query.language;
+                    filter.language = req.query.language;
                 //pagination
                 const page = parseInt(req.query.page) || 1;
                 const limit = parseInt(req.query.limit) || 10;
@@ -264,6 +231,18 @@ class ClaimController {
                 console.error("Failed to re-process claim:", err.message);
             }
         });
+    }
+    // Helper method for verdict explanations
+    getVerdictExplanation(verdict) {
+        const explanations = {
+            true: "This claim is accurate and well-supported by evidence",
+            "mostly-true": "This claim is mostly accurate but may have minor issues",
+            "half-true": "This claim is partially accurate but contains significant omissions or exaggerations",
+            "mostly-false": "This claim contains some truth but is largely inaccurate",
+            false: "This claim is not supported by evidence",
+            "pants-fire": "This claim is completely false and ridiculous",
+        };
+        return explanations[verdict] || "This claim requires further verification";
     }
 }
 export default new ClaimController();

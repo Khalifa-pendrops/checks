@@ -2,97 +2,74 @@ import { Request, Response, NextFunction } from "express";
 import claimService from "../services/claim.service.js";
 import { asyncHandler } from "../utils/apiFeatures.js";
 import AppError from "../utils/appError.js";
-import { IClaimInput } from "../interfaces/claim.interface.js";
+import { IClaimInput, IClaimReview } from "../interfaces/claim.interface.js";
 import { AuthenticatedRequest } from "../types/custom.js";
 
-class ClaimController {
-  //create a claim
-  //access is private
-  createClaim = asyncHandler(
-    async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-      try {
-        const claimData: IClaimInput = {
-          claimType: req.body.claimType,
-          content: req.body.content,
-          language: req.body.language || req.user.languagePreference || "en",
-        };
+class ClaimController { createClaim = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response) => {
+      const claimData = {
+        claimType: req.body.claimType,
+        content: req.body.content,
+        language: req.body.language || req.user.languagePreference || "en",
+      };
 
+      console.log("📨 New claim submission:", claimData.content);
+
+      try {
         const claim = await claimService.createClaim(claimData, req.user._id);
+
+        if (!claim.result) {
+          console.warn("⚠️ No results in claim object");
+          throw new AppError("Fact-check results not available", 500);
+        }
+
+        console.log("📊 Claim results:", JSON.stringify(claim.result, null, 2));
+
         res.status(201).json({
           status: "Success 🎉",
-          message: "Claim created successfully ✅",
+          message: "Claim verified",
           data: {
-            claim,
+            fullResult: claim.result,
+            metadata: {
+              id: claim._id,
+              type: claim.claimType,
+              originalContent: claim.content,
+              status: claim.status,
+              verdict: claim.result.verdict,
+              accuracy: claim.result.accuracy,
+              createdAt: claim.createdAt,
+            },
+            analysis: {
+              explanation: this.getVerdictExplanation(claim.result.verdict),
+              confidence: claim.result.accuracy > 0.7 ? "High" : "Medium",
+            },
           },
         });
-      } catch (err: any) {
+      } catch (error) {
+        console.error("💥 Controller error:", error);
         res.status(500).json({
-          status: "Failed",
-          message: "Failed to create claim",
+          status: "error",
+          message: error instanceof Error ? error.message : "Processing failed",
         });
-        console.error("Failed to create claim:", err.message);
       }
     }
   );
 
-  // claim.controller.ts
-  // createClaim = asyncHandler(
-  //   async (req: AuthenticatedRequest, res: Response) => {
-  //     const claimData: IClaimInput = {
-  //       claimType: req.body.claimType,
-  //       content: req.body.content,
-  //       language: req.body.language || req.user.languagePreference || "en",
-  //     };
+  // Helper method for verdict explanations
+  private getVerdictExplanation(verdict: string): string {
+    const explanations: Record<string, string> = {
+      true: "This claim is accurate and well-supported by evidence",
+      "mostly-true": "This claim is mostly accurate but may have minor issues",
+      "half-true":
+        "This claim is partially accurate but contains significant omissions or exaggerations",
+      "mostly-false":
+        "This claim contains some truth but is largely inaccurate",
+      false: "This claim is not supported by evidence",
+      "pants-fire": "This claim is completely false and ridiculous",
+    };
 
-  //     const claim = await claimService.createClaim(claimData, req.user._id);
-
-  //     if (!claim?.result) {
-  //       throw new AppError("Fact-check processing failed", 500);
-  //     }
-
-  //     res.status(201).json({
-  //       status: "Success 🎉",
-  //       message: "Claim created and fact-checked ✅",
-  //       data: {
-  //         claim: {
-  //           ...claim.toObject(),
-  //           result: claim.result, // Ensured to exist
-  //         },
-  //       },
-  //     });
-  //   }
-  // );
-
-  // In claim.controller.ts
-  // createClaim = asyncHandler(
-  //   async (req: AuthenticatedRequest, res: Response) => {
-  //     const claimData: IClaimInput = {
-  //       ...req.body,
-  //       user: req.user._id,
-  //       status: "pending",
-  //     };
-
-  //     // 1. First create the claim in database
-  //     const newClaim = await claimService.createClaim(claimData);
-
-  //     // 2. Then initiate fact-check (await the results)
-  //     const factCheckResults = await factCheckService.checkClaim(claimData);
-
-  //     // 3. Update claim with results
-  //     const updatedClaim = await claimService.updateClaim(newClaim._id, {
-  //       status: "processed",
-  //       result: factCheckResults,
-  //     });
-
-  //     res.status(201).json({
-  //       status: "Success 🎉",
-  //       message: "Claim created and processed ✅",
-  //       data: {
-  //         claim: updatedClaim, // Includes fact-check results
-  //       },
-  //     });
-  //   }
-  // );
+    return explanations[verdict] || "This claim requires further verification";
+  }
 
   //get all claims (with filtering)
   //access is private/admin
@@ -102,7 +79,7 @@ class ClaimController {
       const filter: any = {};
       if (req.query.status) filter.status = req.query.status;
       if (req.query.claimType) filter.claimType = req.query.claimType;
-      if (req.query.language) filter.langauge = req.query.language;
+      if (req.query.language) filter.language = req.query.language;
 
       //pagination
       const page = parseInt(req.query.page as string) || 1;
@@ -117,7 +94,7 @@ class ClaimController {
         limit,
         page,
         populateUser: true,
-      });
+      }); 
 
       res.status(200).json({
         status: "Success 🎉",
@@ -189,7 +166,7 @@ class ClaimController {
           message: "User's claim fetched successfully ✅",
           results: claims.length,
           data: {
-            claims,
+            claims, 
           },
         });
       } catch (err: any) {

@@ -21,7 +21,10 @@ class UserServices {
     email: string,
     password: string
   ): Promise<{ user: IUser; token: string }> {
-    // ... existing checks ...
+    // 1) Check if email and password exist
+    if (!email || !password) {
+      throw new AppError("📛 Please provide email and password", 400);
+    }
 
     const user = (await User.findOne({ email }).select(
       "+password"
@@ -42,15 +45,10 @@ class UserServices {
 
     const token = createToken(user._id);
 
-    // Log the generated token (for debugging only - remove in production)
-    console.log("Generated token:", token);
-
     return { user, token };
   }
 
-  //   async getUsers(id: string): Promise<IUser | null> {
-  //     return User.find(id);
-  //   }
+
 
   async getUserById(id: string): Promise<IUser | null> {
     return User.findById(id);

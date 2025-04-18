@@ -5,7 +5,7 @@ interface IUserMethods {
 }
 
 export interface IUser extends Document, IUserMethods {
-  id: mongoose.Schema.Types.ObjectId;  //watch here
+  id: mongoose.Schema.Types.ObjectId;  //watch here please
   name: string;
   email: string;
   password: string;

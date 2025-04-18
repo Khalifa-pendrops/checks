@@ -1,13 +1,13 @@
 import { NextFunction, Request, Response } from "express";
 import AppError from "../utils/appError.js";
 
-// Extend the default Error interface for better type safety
+
 interface CustomError extends Error {
   statusCode?: number;
   status?: string;
   isOperational?: boolean;
   errors?: any;
-  type?: string; // for JSON parse error detection
+  type?: string; 
 }
 
 const errorMiddleware = (
@@ -33,7 +33,7 @@ const errorMiddleware = (
   }
 
   if (process.env.NODE_ENV === "development") {
-    console.error("Error Stack 🧱", err.stack); // Optional detailed log in development
+    console.error("Error Stack 🧱", err.stack); // Optional detailed log in development purpose
 
     res.status(err.statusCode).json({
       status: err.status,

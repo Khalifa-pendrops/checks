@@ -13,7 +13,7 @@ const errorMiddleware = (err, req, res, next) => {
         return next(err);
     }
     if (process.env.NODE_ENV === "development") {
-        console.error("Error Stack 🧱", err.stack); // Optional detailed log in development
+        console.error("Error Stack 🧱", err.stack); // Optional detailed log in development purpose
         res.status(err.statusCode).json({
             status: err.status,
             message: err.message || "An unexpected error occurred.",

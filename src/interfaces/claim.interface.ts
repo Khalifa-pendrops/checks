@@ -8,30 +8,28 @@ export interface IClaim extends Document {
   content: string;
   language: string;
   status: "pending" | "processing" | "completed" | "failed";
-  // result?: IClaimResult;
-  // processingErrors?: string[];
   result?: {
-    claimView: any[];
+    rawClaims: any[];
+    claimReview: any[];
+    sources: any[];
     accuracy: number;
-    verdict:
-      | "true"
-      | "mostly-true"
-      | "half-true"
-      | "mostly-false"
-      | "false"
-      | "pants-fire"
-      | "unknown"
-      | "unverified";
+    verdict: string;
   };
   createdAt: Date;
   updatedAt: Date;
+  claimReview?: IClaimReview;
+}
+
+export interface IClaimReviewPublisher {
+  name?: string;
+  site?: string;
 }
 
 export interface IClaimInput {
   claimType: "text" | "url" | "image" | "offline" | string;
   content: string;
   language?: string;
-  userId?: string; //this is optional cause the controller adds it
+  userId?: string; 
 }
 
 export interface IClaimUpdateInput {
@@ -40,9 +38,19 @@ export interface IClaimUpdateInput {
 }
 
 export interface IClaimResult {
-  claimReview: any[];
+  claimView: Array<{
+    user?: string; 
+    comment?: string;
+    date?: string;
+  }>;
+  claimReview: {
+    publisher: string;
+    url: string;
+    date: string;
+    text: string;
+  }[];
+  rawClaims: any[]; 
   accuracy: number;
-  // verdict: Verdict;
   verdict:
     | "true"
     | "mostly-true"
@@ -51,24 +59,78 @@ export interface IClaimResult {
     | "false"
     | "pants-fire"
     | "unknown"
-    | "unverified";
+    | "unverified"
+    | string
+    | Verdict;
+  sources: IFactCheckSource[];
 }
 
-// export interface IClaimResult {
-//   claimView: Array<{
-//     text: string;
-//     claimReview: Array<{
-//       publisher: {
-//         name: string;
-//         site: string;
-//       };
-//       url: string;
-//       reviewRating?: {
-//         ratingValue: number;
-//         alternateName: Verdict;
-//       };
-//     }>;
-//   }>;
-//   accuracy: number;
-//   verdict: Verdict;
-// }
+export interface IFactCheckSource {
+  publisher: {
+    name: string;
+    site: string;
+  };
+  url: string;
+  reviewDate: string;
+}
+
+export interface IReviewRating {
+  ratingValue?: number;
+  alternateName?: string;
+}
+
+export interface IRawClaim {
+  text: string;
+  claimant?: string;
+  claimDate?: string;
+  claimReview?: IClaimReview[];
+}
+
+
+export interface IFactCheckResult {
+  rawClaims: IRawClaim[];
+  claimReview: Array<{
+    publisher: string;
+    url: string;
+    date: string;
+    rating: string;
+    text: string;
+  }>;
+  accuracy: number;
+  verdict: Verdict;
+  sources: IFactCheckSource[];
+  rawApiResponse: IGoogleFactCheckResponse;
+}
+
+interface IGoogleFactCheckResponse {
+  claims: Array<{
+    text: string;
+    claimant?: string;
+    claimDate?: string;
+    claimReview: Array<{
+      publisher: {
+        name: string;
+        site: string;
+      };
+      url: string;
+      title?: string;
+      reviewDate?: string;
+      textualRating?: string;
+      languageCode: string;
+    }>;
+  }>;
+  nextPageToken?: string;
+}
+
+export interface IClaimReview {
+  publisher?: {
+    name: string;
+    site?: string;
+  };
+  url?: string;
+  title?: string;
+  reviewDate?: string;
+  textualRating?: string;
+  languageCode?: string;
+  reviewRating?: IReviewRating;
+}

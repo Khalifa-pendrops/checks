@@ -1,4 +1,3 @@
-// types/verdict.type.ts
 export type Verdict =
   | "true"
   | "mostly-true"

@@ -10,7 +10,8 @@ export const protect = (
   res: Response,
   next: NextFunction
 ) => {
-  console.log("Incoming Headers:", JSON.stringify(req.headers)); 
+  //for debugging purpose only
+  console.log("Incoming Headers:", JSON.stringify(req.headers));
   console.log("Auth Header:", req.headers.authorization);
 
   // 1. Check Authorization header format
