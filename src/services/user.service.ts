@@ -26,8 +26,9 @@ class UserServices {
       throw new AppError("📛 Please provide email and password", 400);
     }
 
+    // 2) Include role in the select statement
     const user = (await User.findOne({ email }).select(
-      "+password"
+      "+password +role"
     )) as IUser & {
       _id: Types.ObjectId;
     };
@@ -36,19 +37,17 @@ class UserServices {
       throw new AppError("🚫 Incorrect login credentials", 401);
     }
 
-    // ADD DEBUG LOGS HERE (right before token creation)
-    console.log("Creating token with:", {
-      userId: user._id,
-      secretLength: process.env.JWT_SECRET?.length || "missing",
-      expiresIn: process.env.JWT_EXPIRES_IN || "default",
-    });
+    // 3) Pass both id and role to createToken
+    const token = createToken(user._id, user.role);
 
-    const token = createToken(user._id);
+    // Debug log to verify token generation
+    console.log("Generated token payload:", {
+      id: user._id,
+      role: user.role,
+    });
 
     return { user, token };
   }
-
-
 
   async getUserById(id: string): Promise<IUser | null> {
     return User.findById(id);

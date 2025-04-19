@@ -6,8 +6,14 @@ const { jwt_secret, expires_in } = config;
 
 type Duration = `${number}${"s" | "m" | "h" | "d" | "w" | "y"}` | number;
 
-export const createToken = (id: Types.ObjectId | string): string => {
-  const payload = { id: id.toString() };
+export const createToken = (
+  id: Types.ObjectId | string,
+  role: string
+): string => {
+  const payload = {
+    id: id.toString(),
+    role, 
+  };
 
   const options: SignOptions = {
     expiresIn: expires_in as Duration,

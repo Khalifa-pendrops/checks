@@ -35,6 +35,7 @@ export const protect = (
       id: string;
       role?: string;
     };
+    console.log("Decoded token payload:", decoded);
 
     // Validate decoded payload
     if (!decoded.id) {
@@ -44,6 +45,7 @@ export const protect = (
     req.user = { _id: decoded.id, role: decoded.role } as IUser & {
       _id: string;
     };
+    console.log("Request user object:", req.user);
     next();
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {

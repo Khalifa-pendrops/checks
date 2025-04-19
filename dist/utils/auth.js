@@ -1,8 +1,11 @@
 import jwt from "jsonwebtoken";
 import config from "../config/index.config.js";
 const { jwt_secret, expires_in } = config;
-export const createToken = (id) => {
-    const payload = { id: id.toString() };
+export const createToken = (id, role) => {
+    const payload = {
+        id: id.toString(),
+        role,
+    };
     const options = {
         expiresIn: expires_in,
     };

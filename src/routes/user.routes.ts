@@ -24,3 +24,4 @@ router.delete("/deleteMe", userController.deleteMe);
 
 // export const userRoutes = router;
 export default router;
+

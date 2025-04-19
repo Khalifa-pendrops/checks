@@ -20,11 +20,13 @@ export const protect = (req, res, next) => {
     try {
         console.log("Verifying token with secret length:", jwt_secret.length);
         const decoded = jwt.verify(token, jwt_secret);
+        console.log("Decoded token payload:", decoded);
         // Validate decoded payload
         if (!decoded.id) {
             return res.status(401).json({ message: "Invalid token payload" });
         }
         req.user = { _id: decoded.id, role: decoded.role };
+        console.log("Request user object:", req.user);
         next();
     }
     catch (error) {

@@ -43,8 +43,7 @@ export const languageValidationRules = () => {
         body("name").isString().notEmpty().withMessage("Language name is required"),
         body("nativeName")
             .isString()
-            .notEmpty()
-            .withMessage("Native name is required"),
+            .withMessage("Native name must be a string if used"),
         body("isActive")
             .optional()
             .isBoolean()

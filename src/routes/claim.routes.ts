@@ -1,6 +1,5 @@
-import { RequestHandler, Request, Response } from "express";
 import { asyncHandler } from "./../utils/apiFeatures.js";
-import { Router } from "express";
+import { Router, RequestHandler } from "express";
 import claimController from "../controllers/claim.controller.js";
 import { protect, restrictTo } from "../middleware/auth.middleware.js";
 import {
@@ -15,6 +14,7 @@ router.use(asyncHandler(protect));
 
 // Claim creation with validation
 router.post("/", claimValidationRules(), validate, claimController.createClaim);
+
 
 // User-specific claims
 router.get("/my-claims", claimController.getMyClaims);
