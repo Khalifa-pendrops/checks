@@ -35,6 +35,27 @@ const claimSchema = new mongoose.Schema(
     },
 
     result: {
+      //uncomment this part to proceed with implementing other claimTypes
+      // metadata: {
+      //   extractedText: String,
+      //   similarClaims: [
+      //     {
+      //       content: String,
+      //       url: String,
+      //       rating: String,
+      //     },
+      //   ],
+      //   imageAnalysis: {
+      //     ocrText: String,
+      //     ocrConfidence: Number,
+      //     similarImages: [String],
+      //   },
+      //   urlAnalysis: {
+      //     finalUrl: String,
+      //     title: String,
+      //     excerpt: String,
+      //   },
+      // },
       claimReview: { type: Array, dafault: [] },
       accuracy: { type: Number, min: 0, max: 100 },
       verdict: {

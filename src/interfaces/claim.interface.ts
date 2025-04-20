@@ -29,7 +29,27 @@ export interface IClaimInput {
   claimType: "text" | "url" | "image" | "offline" | string;
   content: string;
   language?: string;
-  userId?: string; 
+  userId?: string;
+
+  //uncomment to proceed with other claimTypes
+  // metadata?: {
+  //   imageAnalysis?: {
+  //     ocrText?: string;
+  //     similarImahes?: string[];
+  //   };
+  //   urlAnalysis: {
+  //     extractedText?: string;
+  //     finalUrl?: string;
+  //   };
+  // };
+}
+
+export interface IVerdictSource {
+  name: string;
+  url: string;
+  rating: string;
+  date: string;
+  origin?: "google" | "africa-check" | "dubawa" | "factcheckhub";
 }
 
 export interface IClaimUpdateInput {
@@ -39,7 +59,7 @@ export interface IClaimUpdateInput {
 
 export interface IClaimResult {
   claimView: Array<{
-    user?: string; 
+    user?: string;
     comment?: string;
     date?: string;
   }>;
@@ -49,7 +69,7 @@ export interface IClaimResult {
     date: string;
     text: string;
   }[];
-  rawClaims: any[]; 
+  rawClaims: any[];
   accuracy: number;
   verdict:
     | "true"
@@ -86,7 +106,6 @@ export interface IRawClaim {
   claimReview?: IClaimReview[];
 }
 
-
 export interface IFactCheckResult {
   rawClaims: IRawClaim[];
   claimReview: Array<{
@@ -99,6 +118,27 @@ export interface IFactCheckResult {
   accuracy: number;
   verdict: Verdict;
   sources: IFactCheckSource[];
+  //watch from after this line
+  // sources: IVerdictSource | IFactCheckSource[];
+  // confidence: number;
+  // metadata: {
+  //   extractedText?: string;
+  //   similarClaims?: Array<{
+  //     content: string;
+  //     url: string;
+  //     rating: string;
+  //   }>;
+  //   imageAnalysis?: {
+  //     ocrText?: string;
+  //     ocrConfidence?: number;
+  //     similarImages?: string[];
+  //   };
+  //   urlAnalysis?: {
+  //     finalUrl?: string;
+  //     title?: string;
+  //     excerpt?: string;
+  //   };
+  // };
   rawApiResponse: IGoogleFactCheckResponse;
 }
 

@@ -14,8 +14,11 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@types/cheerio": "^0.22.35",
+    "@types/tesseract.js": "^0.0.2",
     "axios": "^1.8.4",
     "bcryptjs": "^3.0.2",
+    "cheerio": "^1.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "4.18.2",
@@ -24,7 +27,8 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.13.2",
     "morgan": "^1.10.0",
-    "path-to-regexp": "^6.2.1"
+    "path-to-regexp": "^6.2.1",
+    "tesseract.js": "^6.0.1"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.2",
