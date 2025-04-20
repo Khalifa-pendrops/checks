@@ -115,7 +115,7 @@ A fact-checking platform, intended to be focused on Nigerian claims in politics,
 ## 🔌 Configuration
 
 Create a .env in the root directory:
- # Core
+ ### Core
  ```
 PORT=5000
 DATABASE_URL=mongodb://localhost:27017/truthcheck
@@ -124,14 +124,14 @@ JWT_EXPIRES_IN=30d
 
 ```
 
-# Google FactCheck
+### Google FactCheck
 ```
 GOOGLE_FACTCHECK_API_KEY=your_key
 GOOGLE_FACTCHECK_API_URL=https://factchecktools.googleapis.com/v1alpha1
 
 ```
 
-# Twitter
+### Twitter
 ```
 TWITTER_API_KEY=your_key
 TWITTER_API_SECRET=your_secret
@@ -140,20 +140,20 @@ TWITTER_ACCESS_SECRET=your_secret
 
 ```
 
-# Africa Check
+### Africa Check
 ```
 AFRICACHECK_API_KEY=your_key
 AFRICACHECK_ENDPOINT=https://africacheck.org/api/v1
 
 ```
 
-# Redis
+### Redis
 ```
 REDIS_URL=redis://localhost:6379
 
 ```
 
-# Scraping
+### Scraping
 ```
 SCRAPING_USER_AGENT="TruthCheckBot/1.0 (+https://yourdomain.com)"
 SCRAPING_TIMEOUT=10000
