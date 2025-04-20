@@ -115,34 +115,50 @@ A fact-checking platform, intended to be focused on Nigerian claims in politics,
 ## 🔌 Configuration
 
 Create a .env in the root directory:
-``` # Core
+ # Core
+ ```
 PORT=5000
 DATABASE_URL=mongodb://localhost:27017/truthcheck
 JWT_SECRET=your_jwt_secret
 JWT_EXPIRES_IN=30d
 
-    # Google FactCheck
-    GOOGLE_FACTCHECK_API_KEY=your_key
-    GOOGLE_FACTCHECK_API_URL=https://factchecktools.googleapis.com/v1alpha1
+```
 
-    # Twitter
-    TWITTER_API_KEY=your_key
-    TWITTER_API_SECRET=your_secret
-    TWITTER_ACCESS_TOKEN=your_token
-    TWITTER_ACCESS_SECRET=your_secret
+# Google FactCheck
+```
+GOOGLE_FACTCHECK_API_KEY=your_key
+GOOGLE_FACTCHECK_API_URL=https://factchecktools.googleapis.com/v1alpha1
 
-    # Africa Check
-    AFRICACHECK_API_KEY=your_key
-    AFRICACHECK_ENDPOINT=https://africacheck.org/api/v1
+```
 
-    # Redis
-    REDIS_URL=redis://localhost:6379
+# Twitter
+```
+TWITTER_API_KEY=your_key
+TWITTER_API_SECRET=your_secret
+TWITTER_ACCESS_TOKEN=your_token
+TWITTER_ACCESS_SECRET=your_secret
 
-    # Scraping
-    SCRAPING_USER_AGENT="TruthCheckBot/1.0 (+https://yourdomain.com)"
-    SCRAPING_TIMEOUT=10000
+```
 
-    ```
+# Africa Check
+```
+AFRICACHECK_API_KEY=your_key
+AFRICACHECK_ENDPOINT=https://africacheck.org/api/v1
+
+```
+
+# Redis
+```
+REDIS_URL=redis://localhost:6379
+
+```
+
+# Scraping
+```
+SCRAPING_USER_AGENT="TruthCheckBot/1.0 (+https://yourdomain.com)"
+SCRAPING_TIMEOUT=10000
+
+```
 
 ---
 
@@ -185,11 +201,11 @@ Example:
 
 1. POST: new text claim (private - logged in user)
 
-`/api/v1/claims/`
+```
+/api/v1/claims/
 
 Example:
 
-```
 {
   "claimType": "text",
   "content": "Sample claim text",
@@ -200,46 +216,69 @@ Example:
 
 2. GET: get all claims (admin)
 
-`/api/v1/claims/`
+```
+/api/v1/claims/
+
+```
 
 3. GET: get current user's claims (private)
 
-`/api/v1/claims/my-claims`
+```
+/api/v1/claims/my-claims
+
+```
 
 4. GET: get claim by `ID` (private and admin)
 
-`/api/v1/claims/:id`
+```
+/api/v1/claims/:id
+
+```
 
 5. PATCH: update cliam metadata (admin)
 
-`/api/v1/claims/:id`
+```
+/api/v1/claims/:id
+
+```
 
 6. DELETE: delete claim (admin)
 
-`/api/v1/claims/:id`
+```
+/api/v1/claims/:id
+
+```
 
 7. POST: reprocess claim (admin)
 
-`/api/v1/claims/"id/reprocess`
+```
+/api/v1/claims/"id/reprocess
+
+```
 
 
 ### Language Endpoints
 
 1. GET: list all supported languages (public)
 
-`/api/v1/language/`
+```/api/v1/language/
+
+```
 
 2. GET: get Nigerian languages (public)
 
-`/api/v1/language/nigerian`
+```
+/api/v1/language/nigerian
+
+```
 
 3. POST: add new language (admin)
 
-`/api/v1/language/`
+```
+/api/v1/language/
 
 Example:
 
-```
 {
   "code": "yo",
   "name": "Yoruba",
@@ -251,9 +290,14 @@ Example:
 
 4. PATCH: update language (admin)
 
-`/api/v1/language/:code`
+```
+/api/v1/language/:code
+
+```
 
 ---
+
+
 ## 🗑️ Postman Collection Structure
 
 Truth Check API/
